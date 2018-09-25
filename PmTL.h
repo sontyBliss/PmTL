@@ -39,6 +39,8 @@ private:
     void doGetDetails(long&);
     void processPlayerDetails(QByteArray& , QString&);
 
+    void resizeEvent(QResizeEvent* event);
+
 private slots:
     void loadCountry(QModelIndex );
     void doLogin();

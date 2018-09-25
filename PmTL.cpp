@@ -3,6 +3,8 @@
 #include "addplayerdialog.h"
 #include "ui_mainwindow.h"
 #include <QTimer>
+#include <QDesktopWidget>
+#include <QResizeEvent>
 
 PmTlCountry PmCountries[PM_NO_COUNTRIES]=
 {
@@ -142,6 +144,34 @@ MainWindow::~MainWindow()
     QSqlDatabase::removeDatabase("tldb");
 }
 
+void MainWindow::resizeEvent(QResizeEvent* /* event */)
+{
+//    QRect screenGeometry = QApplication::desktop()->screenGeometry();
+//    screenGeometry.setHeight(16777215);
+//    ui->countriesList->setGeometry(screenGeometry);
+//    ui->playerList->setGeometry(screenGeometry);
+/*
+    QSize size = event->size();
+    QSize current_size = ui->countriesList->sizeHint();
+    current_size.setHeight(size.height()-50);
+    ui->countriesList->resize(current_size);
+    current_size = ui->playerList->sizeHint();
+    current_size.setHeight(size.height()-20);
+    current_size.setWidth(size.width()-300);
+    ui->playerList->resize(current_size);
+*/
+    QSize size = ui->scrollAreaWidgetContents->size();
+    ui->countriesList->resize(size);
+    size = ui->scrollAreaWidgetContents_2->size();
+    ui->playerList->resize(size);
+/*
+     ui->countriesScrollArea->takeWidget();
+    ui->countriesScrollArea->setWidget(ui->countriesList);
+    ui->playersScrollArea->takeWidget();
+    ui->playersScrollArea->setWidget(ui->playerList);
+*/
+}
+
 void MainWindow::loadCountry(QModelIndex countryIndex)
 {
     playerModel->setTable("players");
@@ -151,7 +181,7 @@ void MainWindow::loadCountry(QModelIndex countryIndex)
     ui->playerList->hideColumn(0);
     ui->playerList->hideColumn(1);
     ui->playerList->resizeColumnsToContents();
-    ui->playerList->sortByColumn(20,Qt::AscendingOrder);
+    ui->playerList->sortByColumn(18,Qt::AscendingOrder);
 }
 
 void MainWindow::displayLoginDialog()
@@ -201,10 +231,10 @@ void MainWindow::loginFinished(QNetworkReply *searchReply)
 
 void MainWindow::doSearch(int type)
 {
-    QNetworkRequest request(QUrl("http://www.pmanager.org/procurar.asp?action=proc_jog"));
+    QNetworkRequest request(QUrl("https://www.pmanager.org/procurar.asp?action=proc_jog"));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    request.setRawHeader("User-Agent","Opera/9.80 (X11; Linux x86_64) Presto/2.12.388 Version/12.12");
-    request.setRawHeader("Referer","http://www.pmanager.org/procurar.asp?action=jogador");
+    request.setRawHeader("User-Agent","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.80 Safari/537.36 OPR/33.0.1990.58");
+    request.setRawHeader("Referer","https://www.pmanager.org/procurar.asp?action=jogador");
     request.setRawHeader("Host","www.pmanager.org");
     request.setRawHeader("Accept","text/html, application/xml;q=0.9, application/xhtml+xml, image/png, image/webp, image/jpeg, image/gif, image/x-xbitmap, */*;q=0.1");
     request.setRawHeader("Accept-Language","en-US,en;q=0.9");
@@ -229,12 +259,12 @@ void MainWindow::doSearch(int type)
     if ( 0 == type )
     {
         params.addQueryItem("qual_op", ">");
-        params.addQueryItem("qual", "8");// very good = 7, excellent = 8
+        params.addQueryItem("qual", "7");// very good = 7, excellent = 8
     }
     else if ( 1 == type )
     {
         params.addQueryItem("qual_op", "=");
-        params.addQueryItem("qual", "8");// very good = 7, excellent = 8
+        params.addQueryItem("qual", "7");// very good = 7, excellent = 8
     }
     params.addQueryItem("prog_op", ">");
     if ( 2 == type )
@@ -321,12 +351,12 @@ void MainWindow::searchFinished(QNetworkReply *searchReply)
         pos = replyPage.indexOf("</table>",pos+1);
         replyPage = replyPage.left(pos);    // cut it down to the tables we need;
 
-        pos = replyPage.indexOf("img/bandeiras-small");
+        pos = replyPage.indexOf("<tr class=list");
         while ( -1 != pos )
         {
             replyPage.remove(0,pos);
             processPlayer(replyPage);
-            pos = replyPage.indexOf("img/bandeiras-small");
+            pos = replyPage.indexOf("<tr class=list");
         }
 
         pos = replyPage.indexOf("Go to Page");
@@ -340,13 +370,13 @@ void MainWindow::searchFinished(QNetworkReply *searchReply)
             pos-=2;
             if ( pos > 0 )
             {
-                QNetworkRequest request(QUrl(QString("http://www.pmanager.org/%1").arg(replyPage.left(pos).data())));
-                request.setRawHeader("User-Agent","Opera/9.80 (X11; Linux x86_64) Presto/2.12.388 Version/12.12");
+                QNetworkRequest request(QUrl(QString("https://www.pmanager.org/%1").arg(replyPage.left(pos).data())));
+                request.setRawHeader("User-Agent","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.80 Safari/537.36 OPR/33.0.1990.58");
                 request.setRawHeader("Host","www.pmanager.org");
                 request.setRawHeader("Accept","text/html, application/xml;q=0.9, application/xhtml+xml, image/png, image/webp, image/jpeg, image/gif, image/x-xbitmap, */*;q=0.1");
                 request.setRawHeader("Accept-Language","en-US,en;q=0.9");
                 request.setRawHeader("Connection","Keep-Alive");
-                request.setRawHeader("Referer","http://www.pmanager.org/procurar.asp?action=proc_jog");
+                request.setRawHeader("Referer","https://www.pmanager.org/procurar.asp?action=proc_jog");
 
                 manager->get(request);
             }
@@ -390,21 +420,21 @@ void MainWindow::updateFinished(QNetworkReply *searchReply)
     db_line += "age='" + playerAge + "'";
     db_line += " where pm_id='"+playerId+";";
 
-    qDebug() << db_line << endl;
+//    qDebug() << db_line << endl;
     QSqlQuery query(db);
     query.exec(QString::fromUtf8(db_line));
 }
 
 void MainWindow::acceptLogin(QString& userName, QString& passWord, bool& checkEnabled)
 {
-    QNetworkRequest request(QUrl("http://www.pmanager.org/default.asp?action=login"));
-    request.setRawHeader("User-Agent","Opera/9.80 (X11; Linux x86_64) Presto/2.12.388 Version/12.12");
+    QNetworkRequest request(QUrl("https://www.pmanager.org/default.asp?action=login"));
+    request.setRawHeader("User-Agent","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.80 Safari/537.36 OPR/33.0.1990.58");
     request.setRawHeader("Host","www.pmanager.org");
     request.setRawHeader("Accept","text/html, application/xml;q=0.9, application/xhtml+xml, image/png, image/webp, image/jpeg, image/gif, image/x-xbitmap, */*;q=0.1");
     request.setRawHeader("Accept-Language","en-US,en;q=0.9");
 //    request.setRawHeader("Accept-Encoding","gzip, deflate");
     request.setRawHeader("Connection","Keep-Alive");
-    request.setRawHeader("Referer","http://www.pmanager.org/default.asp");
+    request.setRawHeader("Referer","https://www.pmanager.org/default.asp");
 #if 0
     Connection: Keep-Alive
     Content-Length: 31
@@ -523,13 +553,13 @@ void MainWindow::processPlayer(QByteArray &replyPage)
 
 void MainWindow::doGetDetails(long& playerId)
 {
-    QNetworkRequest request(QUrl(QString("http://www.pmanager.org/ver_jogador.asp?jog_id=%1").arg(playerId)));
-    request.setRawHeader("User-Agent","Opera/9.80 (X11; Linux x86_64) Presto/2.12.388 Version/12.12");
+    QNetworkRequest request(QUrl(QString("https://www.pmanager.org/ver_jogador.asp?jog_id=%1").arg(playerId)));
+    request.setRawHeader("User-Agent","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.80 Safari/537.36 OPR/33.0.1990.58");
     request.setRawHeader("Host","www.pmanager.org");
     request.setRawHeader("Accept","text/html, application/xml;q=0.9, application/xhtml+xml, image/png, image/webp, image/jpeg, image/gif, image/x-xbitmap, */*;q=0.1");
     request.setRawHeader("Accept-Language","en-US,en;q=0.9");
     request.setRawHeader("Connection","Keep-Alive");
-    request.setRawHeader("Referer","http://www.pmanager.org/procurar.asp?action=proc_jog");
+    request.setRawHeader("Referer","https://www.pmanager.org/procurar.asp?action=proc_jog");
 
     manager->get(request);
 }
@@ -556,6 +586,14 @@ void MainWindow::processPlayerDetails(QByteArray& replyPage,QString& playerId)
     QByteArray db_line("update players set ");
     db_line += "talent='" + talent + "', no_sel='" + caps + "'";
 
+    pos = replyPage.indexOf("<font size=+1>");
+    if ( -1 != pos )
+    {
+        start = replyPage.indexOf("<",pos+1);
+        talent = replyPage.mid(pos+14,start-pos-14).simplified();
+        db_line += ", name='" + talent + "'";
+    }
+
     pos = replyPage.indexOf("<font color=blue>");
     while ( -1 != pos )
     {
@@ -569,7 +607,7 @@ void MainWindow::processPlayerDetails(QByteArray& replyPage,QString& playerId)
     }
     db_line += " where pm_id='"+playerId+"';";
 
-    qDebug() << db_line << endl;
+//    qDebug() << db_line << endl;
     QSqlQuery query(db);
     query.exec(QString::fromUtf8(db_line));
 }
